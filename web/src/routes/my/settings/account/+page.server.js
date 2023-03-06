@@ -1,38 +1,62 @@
-import { error } from '@sveltejs/kit'
+import { redirect, error, fail } from '@sveltejs/kit';
+import { validateFormData } from '$lib/utils';
+import { updateEmailSchema, updateUsernameSchema } from '$lib/schemas';
+
+export const load = ({ locals }) => {
+	if (!locals.pb.authStore.isValid) {
+		throw redirect(303, '/login');
+	}
+};
 
 export const actions = {
-  updateEmail: async ({ locals, request }) => {
-    const body = Object.fromEntries(await request.formData())
+	updateEmail: async ({ locals, request }) => {
+		const { formData, errors } = validateFormData(await request.formData(), updateEmailSchema);
 
-    try {
-      await locals.pb.collection('users').requestEmailChange(body.email)
-    } catch (err) {
-      throw error(err.status, err.message)
-    }
+		if (errors) {
+			return fail(400, {
+				data: formData,
+				errors
+			});
+		}
 
-    return { success: true }
-  },
+		try {
+			await locals.pb.collection('users').requestEmailChange(formData.email);
+		} catch (err) {
+			throw error(err.status, err.message);
+		}
 
-  updateUsername: async ({ request, locals }) => {
-    const body = Object.fromEntries(await request.formData())
+		return { success: true };
+	},
 
-    try {
-      await locals.pb.collection('users').getFirstListItem(`username = "${body.username}"`)
-    } catch (err) {
-      if (err.status === 404) {
-        try {
-          const { username } = await locals.pb.collection('users').update(locals.user.id, { username: body.username })
-          locals.user.username = username
-          return { success: true }
-        } catch (err) {
-          console.log('Error: ', err)
-          throw error(err.status, err.message)
-        }
-      }
-      console.log('Error: ', err)
-      throw error(err.status, err.message)
-    }
+	updateUsername: async ({ request, locals }) => {
+		const { formData, errors } = validateFormData(await request.formData(), updateUsernameSchema);
 
-    return { success: true }
-  }
-}
+		if (errors) {
+			return fail(400, {
+				data: formData,
+				errors
+			});
+		}
+
+		try {
+			await locals.pb.collection('users').getFirstListItem(`username = "${formData.username}"`);
+		} catch (err) {
+			if (err.status === 404) {
+				try {
+					const { username } = await locals.pb
+						.collection('users')
+						.update(locals.user.id, { username: formData.username });
+					locals.user.username = username;
+					return { success: true };
+				} catch (err) {
+					console.log('Error: ', err);
+					throw error(err.status, err.message);
+				}
+			}
+			console.log('Error: ', err);
+			throw error(err.status, err.message);
+		}
+
+		return { success: true };
+	}
+};

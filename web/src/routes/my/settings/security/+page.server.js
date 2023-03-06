@@ -1,17 +1,31 @@
-import { error, redirect } from '@sveltejs/kit'
+import { error, redirect, fail } from '@sveltejs/kit';
+import { validateFormData } from '$lib/utils';
+import { updatePasswordSchema } from '$lib/schemas';
+
+export const load = ({ locals }) => {
+	if (!locals.pb.authStore.isValid) {
+		throw redirect(303, '/login');
+	}
+};
 
 export const actions = {
-  updatePassword: async ({ request, locals }) => {
-    const body = Object.fromEntries(await request.formData())
+	updatePassword: async ({ request, locals }) => {
+		const { formData, errors } = validateFormData(await request.formData(), updatePasswordSchema);
 
-    try {
-      await locals.pb.collection('users').update(locals.user.id, body)
-      locals.pb.authStore.clear()
-    } catch (err) {
-      console.log('Error: ', err)
-      throw error(err.status, err.message)
-    }
+		if (errors) {
+			return fail(400, {
+				errors
+			});
+		}
 
-    throw redirect(303, '/login')
-  }
-}
+		try {
+			await locals.pb.collection('users').update(locals.user.id, formData);
+			locals.pb.authStore.clear();
+		} catch (err) {
+			console.log('Error: ', err);
+			throw error(err.status, err.message);
+		}
+
+		throw redirect(303, '/login');
+	}
+};

@@ -14,8 +14,6 @@ export const actions = {
 		const body = await request.formData();
 		body.append('user', locals.user.id);
 
-		console.log(body);
-
 		const thumb = body.get('thumbnail');
 		if (thumb.size === 0) body.delete('thumbnail');
 		body.append('user', locals.user.id);

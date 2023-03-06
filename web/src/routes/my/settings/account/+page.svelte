@@ -52,7 +52,7 @@
   <Modal name="change-email" open={isEditEmailModalOpen} title="Change email">
     <span slot="trigger" class="btn btn-primary">Change email</span>
     <form action="?/updateEmail" method="post" class="space-y-2" use:enhance={submitEmailUpdate}>
-      <Input id="email" type="email" label="Enter new email" value={form?.data?.email} required />
+      <Input id="email" type="email" label="Enter new email" value={form?.data?.email} errors={form?.errors?.email} required />
       <button class="btn btn-primary w-full" disabled={loading}>Submit</button>
     </form>
   </Modal>
@@ -64,7 +64,7 @@
   <Modal name="change-username" open={isEditUsernameModalOpen} title="Change username">
     <span slot="trigger" class="btn btn-primary">Change username</span>
     <form action="?/updateUsername" method="post" class="space-y-2" use:enhance={submitUsernameUpdate}>
-      <Input id="username" label="Enter new username" required />
+      <Input id="username" label="Enter new username" value={form?.data?.username} errors={form?.errors?.username} required />
       <button class="btn btn-primary w-full" disabled={loading}>Submit</button>
     </form>
   </Modal>
